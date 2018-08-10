@@ -1,0 +1,31 @@
+{
+  "name": "node-mtp",
+  "version": "0.0.1",
+  "description": "Access devices over MTP using Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "prebuildify --napi",
+    "install": "node-gyp-build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tidepool-org/node-mtp.git"
+  },
+  "keywords": [
+    "mtp",
+    "node"
+  ],
+  "author": "Gerrit Niezen <gerrit@tidepool.org>",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/tidepool-org/node-mtp/issues"
+  },
+  "homepage": "https://github.com/tidepool-org/node-mtp#readme",
+  "devDependencies": {
+    "node-gyp-build": "^3.4.0",
+    "prebuildify": "^2.7.0",
+    "prebuildify-ci": "^1.0.2",
+    "napi-macros": "^1.7.0"
+  }
+}
