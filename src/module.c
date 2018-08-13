@@ -11,19 +11,8 @@ NAPI_METHOD(getFile) {
   NAPI_ARGV(2)
   NAPI_ARGV_INT32(id, 0)
 
-  napi_status status;
-  int ret, fid = 0;
-  status = napi_get_value_int32(env, argv[1], &fid);
-
-  if (status == napi_ok) {
-    printf("descriptor");
-    ret = LIBMTP_Get_File_To_File_Descriptor(device, id, fid, NULL, NULL);
-  } else {
-    // argument is not a file id, so it should be a path
-    NAPI_ARGV_UTF8_MALLOC(path, 1)
-    ret = LIBMTP_Get_File_To_File(device, id, path, NULL, NULL);
-  }
-
+  NAPI_ARGV_UTF8_MALLOC(path, 1)
+  int ret = LIBMTP_Get_File_To_File(device, id, path, NULL, NULL);
   if (ret != 0) {
     napi_throw_error(env, NULL, "Could not retrieve file");
   }
@@ -91,16 +80,28 @@ NAPI_METHOD(close) {
   return NULL;
 }
 
+NAPI_METHOD(connect) {
+    printf("1\n");
+  LIBMTP_Release_Device(device);
+  device = LIBMTP_Get_First_Device();
+    printf("2\n");
+  if (device == NULL) {
+    napi_throw_error(env, NULL, "No devices available.");
+  }
+  printf("Connected\n");
+  return NULL;
+}
+
 NAPI_INIT() {
   LIBMTP_Init();
-
   fprintf(stdout, "libmtp version: " LIBMTP_VERSION_STRING "\n\n");
-
   device = LIBMTP_Get_First_Device();
   if (device == NULL) {
     printf("No devices.\n");
   }
 
+
+  NAPI_EXPORT_FUNCTION(connect)
   NAPI_EXPORT_FUNCTION(getFile)
   NAPI_EXPORT_FUNCTION(getFileListing)
   NAPI_EXPORT_FUNCTION(close)
