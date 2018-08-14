@@ -4,7 +4,6 @@
   "description": "Access devices over MTP using Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "prebuild": "prebuildify --napi",
     "install": "node-gyp-build"
   },
