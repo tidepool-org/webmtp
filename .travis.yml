@@ -12,6 +12,7 @@ addons:
     - g++-4.8-multilib
     - gcc-multilib
     - g++-multilib
+    - libmtp
 os:
 - osx
 - linux
