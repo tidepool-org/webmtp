@@ -29,3 +29,15 @@ To build this on your own machine, you'll need `libmtp`:
 
 - Ubuntu: `sudo apt-get install libmtp-dev`
 - macOS: `brew install libmtp`
+
+## Updating on NPM
+
+The following steps will update the module on NPM:
+
+- `npm version minor`
+- `git push && git push --tags`
+- Wait for Travis to finish.
+- Download the releases from Github: `prebuildify-ci download`
+- `npm publish`
+
+Note that you need to `npm install -g prebuildify-ci` to get the prebuilds.
