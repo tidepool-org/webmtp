@@ -75,16 +75,15 @@ NAPI_METHOD(getFileListing) {
   return NULL;
 }
 
-NAPI_METHOD(close) {
+NAPI_METHOD(release) {
   LIBMTP_Release_Device(device);
   return NULL;
 }
 
-NAPI_METHOD(connect) {
-    printf("1\n");
-  LIBMTP_Release_Device(device);
+NAPI_METHOD(attach) {
+
   device = LIBMTP_Get_First_Device();
-    printf("2\n");
+
   if (device == NULL) {
     napi_throw_error(env, NULL, "No devices available.");
   }
@@ -95,14 +94,9 @@ NAPI_METHOD(connect) {
 NAPI_INIT() {
   LIBMTP_Init();
   fprintf(stdout, "libmtp version: " LIBMTP_VERSION_STRING "\n\n");
-  device = LIBMTP_Get_First_Device();
-  if (device == NULL) {
-    printf("No devices.\n");
-  }
 
-
-  NAPI_EXPORT_FUNCTION(connect)
+  NAPI_EXPORT_FUNCTION(attach)
   NAPI_EXPORT_FUNCTION(getFile)
   NAPI_EXPORT_FUNCTION(getFileListing)
-  NAPI_EXPORT_FUNCTION(close)
+  NAPI_EXPORT_FUNCTION(release)
 }
