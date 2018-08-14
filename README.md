@@ -22,3 +22,10 @@ mtp.getFile(8, 'test.jpg'); // <file id>, <destination>
 
 mtp.release();
 ```
+
+## Building
+
+To build this on your own machine, you'll need `libmtp`:
+
+- Ubuntu: `sudo apt-get install libmtp-dev`
+- macOS: `brew install libmtp`
