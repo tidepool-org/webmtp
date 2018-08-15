@@ -27,5 +27,11 @@
   },
   "devDependencies": {
     "prebuildify": "2.7.0"
-  }
+  },
+  "os": [
+    "!win32"
+  ],
+  "cpu": [
+    "x64"
+  ]
 }
