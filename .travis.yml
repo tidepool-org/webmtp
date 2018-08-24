@@ -22,8 +22,8 @@ before_deploy:
 - npm run prebuild
 - if [ $TRAVIS_OS_NAME = osx ]; then
   cp "$TRAVIS_BUILD_DIR/lib/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds";
-  install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" node-napi.node;
-  otool -L node-napi.node; 
+  install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds/node-napi.node";
+  otool -L "$TRAVIS_BUILD_DIR/prebuilds/node-napi.node";
   fi
 - tar --create --verbose --file="$ARCHIVE_NAME" --directory "$TRAVIS_BUILD_DIR/prebuilds"
   .
