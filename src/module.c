@@ -86,8 +86,10 @@ NAPI_METHOD(attach) {
 
   if (device == NULL) {
     napi_throw_error(env, NULL, "No devices available.");
+  } else {
+    printf("Connected\n");
   }
-  printf("Connected\n");
+  
   return NULL;
 }
 
