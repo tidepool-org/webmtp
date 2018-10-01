@@ -13,6 +13,7 @@ NAPI_METHOD(getFile) {
 
   NAPI_ARGV_UTF8_MALLOC(path, 1)
   int ret = LIBMTP_Get_File_To_File(device, id, path, NULL, NULL);
+  free(path);
   if (ret != 0) {
     napi_throw_error(env, NULL, "Could not retrieve file");
   }
@@ -89,7 +90,7 @@ NAPI_METHOD(attach) {
   } else {
     printf("Connected\n");
   }
-  
+
   return NULL;
 }
 
