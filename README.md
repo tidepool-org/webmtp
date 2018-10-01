@@ -34,7 +34,7 @@ To build this on your own machine, you'll need `libmtp`:
 
 The following steps will update the module on Yarn/NPM:
 
-- `yarn version minor`
+- `yarn version`
 - `git push && git push --tags`
 - Wait for Travis to finish.
 - Download the releases from Github: `prebuildify-ci download`
