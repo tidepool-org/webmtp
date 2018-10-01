@@ -1,11 +1,12 @@
 {
   "name": "node-mtp",
-  "version": "0.1.13",
+  "version": "0.2.1",
   "description": "Access devices over MTP using Node.js",
   "main": "index.js",
   "scripts": {
     "install": "node-gyp-build",
-    "prebuild": "prebuildify --napi"
+    "prebuild": "prebuildify --napi",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "repository": {
     "type": "git",
