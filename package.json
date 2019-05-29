@@ -27,7 +27,7 @@
     "node-gyp-build": "3.4.0"
   },
   "devDependencies": {
-    "prebuildify": "2.7.0"
+    "prebuildify": "2.9.1"
   },
   "os": [
     "!win32"
