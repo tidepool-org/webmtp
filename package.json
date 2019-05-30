@@ -1,6 +1,6 @@
 {
   "name": "node-mtp",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Access devices over MTP using Node.js",
   "main": "index.js",
   "scripts": {
