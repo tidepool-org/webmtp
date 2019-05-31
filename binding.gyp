@@ -3,11 +3,11 @@
         "target_name": "module",
         "sources": [ "./src/module.c" ],
         "library_dirs": [
-            '../lib'
+            "../lib"
         ],
         "libraries": [
-            '-lusb',
-	    '-lmtp'
+            "-lusb",
+	        "-lmtp"
         ],
         "include_dirs": [
           "<!(node -e \"require('napi-macros')\")"
