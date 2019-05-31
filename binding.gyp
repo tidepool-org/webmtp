@@ -6,10 +6,8 @@
             '../lib'
         ],
         "libraries": [
-            "<!@(pkg-config --libs libmtp libusb-1.0)"
-        ],
-        "cflags": [
-            "<!@(pkg-config --cflags libmtp libusb-1.0)"
+            '-lusb',
+	    '-lmtp'
         ],
         "include_dirs": [
           "<!(node -e \"require('napi-macros')\")"
