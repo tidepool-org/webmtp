@@ -6,7 +6,6 @@
             "../lib"
         ],
         "libraries": [
-            "-lusb",
 	        "-lmtp"
         ],
         "include_dirs": [
