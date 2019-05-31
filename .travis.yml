@@ -26,10 +26,10 @@ before_deploy:
   otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
   install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
   otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
-  cp "$TRAVIS_BUILD_DIR/lib/libusb-1.0.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/";
-  install_name_tool -change "/usr/local/opt/libusb/lib/libusb-1.0.0.dylib" "@loader_path/libusb-1.0.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
+  cp "$TRAVIS_BUILD_DIR/lib/libusb-1.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/";
+  install_name_tool -change "/usr/local/opt/libusb/lib/libusb-1.0.dylib" "@loader_path/libusb-1.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
   otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
-  install_name_tool -change "/usr/local/opt/libusb/lib/libusb-1.0.0.dylib" "@loader_path/libusb-1.0.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
+  install_name_tool -change "/usr/local/opt/libusb/lib/libusb-1.0.dylib" "@loader_path/libusb-1.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
   otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
   fi
 - tar --create --verbose --file="$ARCHIVE_NAME" --directory "$TRAVIS_BUILD_DIR/prebuilds"
