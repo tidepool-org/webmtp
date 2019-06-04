@@ -12,9 +12,11 @@ addons:
     - g++-4.8-multilib
     - gcc-multilib
     - g++-multilib
-- os: osx
-  osx_image: xcode9
-- os: linux
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9
+    - os: linux
 before_install:
   - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install libmtp-dev; else brew install libmtp; fi
 before_deploy:
