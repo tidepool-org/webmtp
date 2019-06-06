@@ -2,11 +2,11 @@
     "targets": [{
         "target_name": "module",
         "sources": [ "./src/module.c" ],
-        "libraries": [
-            "<!@(pkg-config --libs libmtp)"
+        "library_dirs": [
+            "../lib"
         ],
-        "cflags": [
-            "<!@(pkg-config --cflags libmtp)"
+        "libraries": [
+	        "-lmtp"
         ],
         "include_dirs": [
           "<!(node -e \"require('napi-macros')\")"

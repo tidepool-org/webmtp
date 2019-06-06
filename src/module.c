@@ -1,6 +1,6 @@
 #include <node_api.h>
 #include <napi-macros.h>
-#include <libmtp.h>
+#include "libmtp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
