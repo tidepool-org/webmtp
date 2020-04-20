@@ -1,7 +1,7 @@
 sudo: false
 language: node_js
 node_js:
-- node
+- 12.13.0
 addons:
   apt:
     sources:
@@ -25,11 +25,9 @@ before_deploy:
 - if [ $TRAVIS_OS_NAME = osx ]; then
   cp "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/libmtp.dylib";
   cp "/usr/local/opt/libusb/lib/libusb-1.0.0.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/libusb.dylib";
-  install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
-  install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
+  install_name_tool -change "/usr/local/opt/libmtp/lib/libmtp.9.dylib" "@loader_path/libmtp.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node.napi.node";
   install_name_tool -change "/usr/local/opt/libusb/lib/libusb-1.0.0.dylib" "@loader_path/libusb.dylib" "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/libmtp.dylib";
-  otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node-napi.node";
-  otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/electron-napi.node";
+  otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/node.napi.node";
   otool -L "$TRAVIS_BUILD_DIR/prebuilds/darwin-x64/libmtp.dylib";
   fi
 - tar --create --verbose --file="$ARCHIVE_NAME" --directory "$TRAVIS_BUILD_DIR/prebuilds"
@@ -42,6 +40,6 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    node: node
+    node: 12.13.0
   api_key:
     secure: lRbSXHqX/hC0FE4VSCyg9qZ3O67wQU7PLKt7DUvVnDPW+FojPUoqyjw1bM/57RH/eXsKuUQwHtndtmWAslaKGpO0McXyiIImaIN5ROaqZowE3qhbXulybs7CGQ1WJzKOldAPBs9Keho2L6QO6WbpuA0SrFGt7mwRl2jOxUF3WjqjlVU3nRrdtmjzH5c4IA10Y7RLVWwgiZw8j4+vNa7k5YN6V5x65ZkObnp3sKgy1PC2+LgCjIsUF/WAosUwbwQwrMBtSjNkcb8OPvZMpCXhjbLO/orv+re7V6f0cmgY5fhq3nGmCecn7ma2FLMFRwI9AK7DC7MoAmwh5J9utreT4DoFx7Armjue16V7MIOfm3fPuvoS/4bJrdKg8ealqfzPRKJ7lTwoX8eBq4iBY4k4XeDe8nirUfDquhfDBdz+3QJ9BytYbObL0ThmlgE1Cm8qtoAfyyXaO4U27jArmY4C1q4mzX8BoDwdt9p949cUgKAzfhTTvGePmvVuj4ETbX0Fj6Rcb2Ksk8GzJDzxUTQTF7a7Yaa4i6C6fqXgudazNz3SGspXTMwdyGrDLjfZ6KID/lqhOtozW+TFvfherel8ZYOOJt14r/9s0WmCklQseq/CeZr7p9JyhIMb5Ms0+VL5uKPn8aHjmxxKHboM8vSQqimA0/Tdc7dFrPNWetKwcTU=
