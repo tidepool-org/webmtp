@@ -1,9 +1,23 @@
-const usb = require('webusb').usb;
-const EventEmitter = require('events'); // TODO: use EventTarget for browser
-const fs = require('fs'); // TODO: implement browser option
+let isBrowser, usb, fs = null;
+
+if (typeof navigator !== 'undefined') {
+  const userAgent = navigator.userAgent.toLowerCase();
+  isBrowser = userAgent.indexOf(' electron/') === -1 && typeof window !== 'undefined';
+} else {
+  // Node.js process
+  isBrowser = false;
+}
+
+if (!isBrowser) {
+  // For Node.js and Electron
+  usb = require('webusb').usb;
+  EventTarget = require('events');
+  fs = require('fs');
+} else {
+  usb = navigator.usb;
+}
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-let transactionID = 0;
 
 const TYPE = [
   'undefined',
@@ -25,59 +39,12 @@ const CODE = {
   GET_OBJECT_PROP_VALUE: { value: 0x9803, name: 'GetObjectPropValue' },
 };
 
-const getName = (list, idx) => {
-  for (let i in list) {
-    if (list[i].value === idx) {
-      return list[i].name;
-    }
-  }
-  return 'unknown';
-};
-
-const buildContainerPacket = (container) => {
-  // payload parameters are always 4 bytes in length
-  let packetLength = 12 + (container.payload.length * 4);
-
-  const buf = new ArrayBuffer(packetLength);
-  const bytes = new DataView(buf);
-  bytes.setUint32(0, packetLength, true);
-  bytes.setUint16(4, container.type, true);
-  bytes.setUint16(6, container.code, true);
-  bytes.setUint32(8, transactionID, true);
-
-  container.payload.forEach((element, index) => {
-    bytes.setUint32(12 + (index * 4), element, true);
-  });
-
-  transactionID += 1;
-
-  console.log('Sending', buf);
-  return buf;
-};
-
-const parseContainerPacket = (bytes, length) => {
-  const fields = {
-    type : TYPE[bytes.getUint16(4, true)],
-    code : getName(CODE, bytes.getUint16(6, true)),
-    transactionID : bytes.getUint32(8, true),
-    payload: bytes.buffer.slice(12),
-    parameters: [],
-  };
-
-  for (let i = 12; i < length; i += 4) {
-    if (i <= length - 4) {
-      fields.parameters.push(bytes.getUint32(i, true));
-    }
-  }
-
-  console.log(fields);
-  return fields;
-};
-
-class Mtp extends EventEmitter {
+class Mtp extends EventTarget {
   constructor(vendorId, productId) {
     super();
     const self = this;
+    self.state = 'open';
+    self.transactionID = 0;
 
     (async () => {
       const device = await usb.requestDevice({
@@ -105,11 +72,69 @@ class Mtp extends EventEmitter {
       self.device = device;
       self.isClosing = false;
       self.readLoop();
-      self.emit('ready'); // can be replaced with EventTarget dispatchEvent in browser
+      if (isBrowser) {
+        self.dispatchEvent(new Event('ready'));
+      } else {
+        self.emit('ready');
+      }
     })().catch((error) => {
       console.log('Error during MTP setup:', error);
+      if (isBrowser) {
+        self.dispatchEvent(new Event('ready'));
+      } else {
+        self.emit('ready');
+      }
       self.emit('error', error);
     });
+  }
+
+  getName(list, idx) {
+    for (let i in list) {
+      if (list[i].value === idx) {
+        return list[i].name;
+      }
+    }
+    return 'unknown';
+  };
+
+  buildContainerPacket(container) {
+    // payload parameters are always 4 bytes in length
+    let packetLength = 12 + (container.payload.length * 4);
+
+    const buf = new ArrayBuffer(packetLength);
+    const bytes = new DataView(buf);
+    bytes.setUint32(0, packetLength, true);
+    bytes.setUint16(4, container.type, true);
+    bytes.setUint16(6, container.code, true);
+    bytes.setUint32(8, this.transactionID, true);
+
+    container.payload.forEach((element, index) => {
+      bytes.setUint32(12 + (index * 4), element, true);
+    });
+
+    this.transactionID += 1;
+
+    console.log('Sending', buf);
+    return buf;
+  }
+
+  parseContainerPacket(bytes, length) {
+    const fields = {
+      type : TYPE[bytes.getUint16(4, true)],
+      code : this.getName(CODE, bytes.getUint16(6, true)),
+      transactionID : bytes.getUint32(8, true),
+      payload: bytes.buffer.slice(12),
+      parameters: [],
+    };
+
+    for (let i = 12; i < length; i += 4) {
+      if (i <= length - 4) {
+        fields.parameters.push(bytes.getUint32(i, true));
+      }
+    }
+
+    console.log(fields);
+    return fields;
   }
 
   async readLoop() {
@@ -142,7 +167,11 @@ class Mtp extends EventEmitter {
       // totalLength += incoming.data.byteLength;
       // console.log('Full buffer is now:', raw);
 
-      this.emit('data', parseContainerPacket(bytes, length));
+      if (isBrowser) {
+        this.dispatchEvent(new CustomEvent('data', { detail: this.parseContainerPacket(bytes, length) }));
+      } else {
+        this.emit('data', this.parseContainerPacket(bytes, length));
+      }
     }
 
     if (!this.isClosing && this.device.opened) {
@@ -164,32 +193,21 @@ class Mtp extends EventEmitter {
         code: CODE.CLOSE_SESSION.value,
         payload: [1], // session ID
       };
-      await this.writeAsync(buildContainerPacket(closeSession));
+      await this.writeAsync(this.buildContainerPacket(closeSession));
 
       await this.device.releaseInterface(0);
       await this.device.close();
-      // this.removeAllListeners();
+      if (!isBrowser) {
+        this.removeAllListeners();
+      }
       console.log('Closed device');
     } catch(err) {
       console.log('Error:', err);
     }
   }
-}
 
-
-
-const mtp = new Mtp(0x0e8d, 0x201d);
-let state = 'open';
-let fileName = null;
-let objectHandle = null;
-
-mtp.on('error', (err) => {
-  console.log('Error', err);
-});
-
-mtp.on('ready', async () => {
-  mtp.on('data', async (data) => {
-    switch (state) {
+  async dataHandler(data) {
+    switch (this.state) {
       case 'open':
         console.log('Getting object handles..');
         const getObjectHandles = {
@@ -197,8 +215,8 @@ mtp.on('ready', async () => {
           code: CODE.GET_OBJECT_HANDLES.value,
           payload: [0xFFFFFFFF, 0, 0xFFFFFFFF], // get all
         };
-        await mtp.writeAsync(buildContainerPacket(getObjectHandles, 4));
-        state = 'handles';
+        await this.writeAsync(this.buildContainerPacket(getObjectHandles, 4));
+        this.state = 'handles';
         break;
       case 'handles':
         if (data.type === 'Data Block') {
@@ -209,59 +227,109 @@ mtp.on('ready', async () => {
             console.log('Object handle', element);
           });
 
-          objectHandle = Math.max(...data.parameters);
+          this.objectHandle = Math.max(...data.parameters);
 
           console.log('Getting file name..');
           const getFilename = {
             type: 1,
             code: CODE.GET_OBJECT_PROP_VALUE.value,
-            payload: [objectHandle, CODE.OBJECT_FILE_NAME.value], // objectHandle and objectPropCode
+            payload: [this.objectHandle, CODE.OBJECT_FILE_NAME.value], // objectHandle and objectPropCode
           };
-          await mtp.writeAsync(buildContainerPacket(getFilename));
-          state = 'filename';
+          await this.writeAsync(this.buildContainerPacket(getFilename));
+          this.state = 'filename';
         }
         break;
       case 'filename':
         if (data.type === 'Data Block') {
           const array = new Uint8Array(data.payload);
           const decoder = new TextDecoder('utf-16le');
-          filename = decoder.decode(array.subarray(1, array.byteLength - 2));
-          console.log('Filename:', filename);
+          this.filename = decoder.decode(array.subarray(1, array.byteLength - 2));
+          console.log('Filename:', this.filename);
 
           console.log('Getting file..');
           const getFile = {
             type: 1,
             code: CODE.GET_OBJECT.value,
-            payload: [objectHandle],
+            payload: [this.objectHandle],
           };
-          await mtp.writeAsync(buildContainerPacket(getFile));
-          state = 'file';
+          await this.writeAsync(this.buildContainerPacket(getFile));
+          this.state = 'file';
         }
         break;
       case 'file':
         if (data.type === 'Data Block') {
           const array = new Uint8Array(data.payload);
-          fs.writeFileSync(filename, array);
 
-          state = 'close';
+          if (isBrowser) {
+            var file = new Blob([array]);
+            const a = document.createElement('a'),
+                url = URL.createObjectURL(file);
+            a.href = url;
+            a.download = this.filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+          } else {
+            fs.writeFileSync(this.filename, array);
+          }
+
+          this.state = 'close';
         }
         break;
       case 'close':
-        await mtp.closeAsync();
+        await this.closeAsync();
         break;
     }
+  }
+
+  async openSession() {
+    console.log('Opening session..');
+    const openSession = {
+      type: 1, // command block
+      code: CODE.OPEN_SESSION.value,
+      payload: [1], // session ID
+    };
+    let data = this.buildContainerPacket(openSession);
+    let result = await this.writeAsync(data);
+    console.log('Result:', result);
+
+    await delay(2000); // wait for send/receive to complete
+  }
+}
+
+
+
+const initMTP = () => {
+  const mtp = new Mtp(0x0e8d, 0x201d);
+
+  if (isBrowser) {
+    mtp.addEventListener('error', err => console.log('Error', err));
+
+    mtp.addEventListener('ready', async () => {
+      mtp.addEventListener('data', (event) => mtp.dataHandler(event.detail));
+      await mtp.openSession();
+    } );
+  } else {
+    mtp.on('error', err => console.log('Error', err));
+    mtp.on('ready', async () => {
+      mtp.on('data', (data) => mtp.dataHandler(data));
+      await mtp.openSession();
+    });
+  }
+};
+
+if (isBrowser) {
+  document.addEventListener('DOMContentLoaded', event => {
+    let button = document.getElementById('connect');
+
+    button.addEventListener('click', async() => {
+      initMTP();
+    });
   });
 
-  console.log('Opening session..');
-  const openSession = {
-    type: 1, // command block
-    code: CODE.OPEN_SESSION.value,
-    payload: [1], // session ID
-  };
-  let data = buildContainerPacket(openSession);
-  let result = await mtp.writeAsync(data);
-  console.log('Result:', result);
-
-  await delay(2000); // wait for send/receive to complete
-
-});
+} else {
+  initMTP();
+}
