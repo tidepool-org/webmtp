@@ -8,8 +8,46 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
 
 ## Usage
 
+### Browser
+
 ```
-const mtp = require('webmtp');
+<html>
+  <head>
+    <title>MTP over WebUSB</title>
+    <script src="https://cdn.jsdelivr.net/npm/webmtp/mtp.min.js"></script>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', event => {
+      let button = document.getElementById('connect');
+
+      button.addEventListener('click', async() => {
+        const mtp = new Mtp(0x0e8d, 0x201d);
+
+        mtp.addEventListener('error', err => console.log('Error', err));
+
+        mtp.addEventListener('ready', async () => {
+          mtp.addEventListener('data', (event) => mtp.dataHandler(event.detail));
+          await mtp.openSession();
+        });
+      });
+    });
+  <body>
+    <button id="connect">Connect</button>
+  </body>
+</html>
+```
+
+### Node.js / Electron
+
+```
+const Mtp = require('webmtp');
+
+const mtp = new Mtp(vendorId, productId);
+
+mtp.on('error', err => console.log('Error', err));
+mtp.on('ready', async () => {
+  mtp.on('data', (data) => mtp.dataHandler(data));
+  await mtp.openSession();
+});
 
 TODO
 ```

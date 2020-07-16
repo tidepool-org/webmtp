@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>MTP over WebUSB</title>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/webmtp/mtp.min.js"></script> -->
+    <script src="mtp.js"></script>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', event => {
+      let button = document.getElementById('connect');
+
+      button.addEventListener('click', async() => {
+        const mtp = new Mtp(0x0e8d, 0x201d);
+
+        mtp.addEventListener('error', err => console.log('Error', err));
+
+        mtp.addEventListener('ready', async () => {
+          mtp.addEventListener('data', (event) => mtp.dataHandler(event.detail));
+          await mtp.openSession();
+        });
+      });
+    });
+    </script>
+  </head>
+  <body>
+    <button id="connect">Connect</button>
+  </body>
+</html>

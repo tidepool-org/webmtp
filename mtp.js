@@ -45,46 +45,59 @@ class Mtp extends EventTarget {
     const self = this;
     self.state = 'open';
     self.transactionID = 0;
+    self.device = null;
 
     (async () => {
-      const device = await usb.requestDevice({
-        filters: [
-          {
-            vendorId,
-            productId,
-          }
-        ]
-      });
 
-      if (device.opened) {
-          console.log('Already open');
-          await device.close();
+      let devices = await usb.getDevices();
+      for (const device of devices) {
+        if (device.productId === productId && device.vendorId === vendorId) {
+          self.device = device;
+        }
+      };
+
+      if (self.device === null) {
+        self.device = await usb.requestDevice({
+          filters: [
+            {
+              vendorId,
+              productId,
+            }
+          ]
+        });
       }
-      await device.open();
-      console.log('Opened:', device.opened);
 
-      if (device.configuration === null) {
-        console.log('selectConfiguration');
-        await device.selectConfiguration(1);
-      }
-      await device.claimInterface(0);
+      if (self.device != null) {
+        if (self.device.opened) {
+            console.log('Already open');
+            await self.device.close();
+        }
+        await self.device.open();
+        console.log('Opened:', self.device.opened);
 
-      self.device = device;
-      self.isClosing = false;
-      self.readLoop();
-      if (isBrowser) {
-        self.dispatchEvent(new Event('ready'));
+        if (self.device.configuration === null) {
+          console.log('selectConfiguration');
+          await self.device.selectConfiguration(1);
+        }
+        await self.device.claimInterface(0);
+
+        self.isClosing = false;
+        self.readLoop();
+        if (isBrowser) {
+          self.dispatchEvent(new Event('ready'));
+        } else {
+          self.emit('ready');
+        }
       } else {
-        self.emit('ready');
+        throw new Error('No device available.');
       }
     })().catch((error) => {
       console.log('Error during MTP setup:', error);
       if (isBrowser) {
-        self.dispatchEvent(new Event('ready'));
+        self.dispatchEvent(new Event('error'));
       } else {
-        self.emit('ready');
+        self.emit('error', error);
       }
-      self.emit('error', error);
     });
   }
 
@@ -300,36 +313,6 @@ class Mtp extends EventTarget {
   }
 }
 
-
-
-const initMTP = () => {
-  const mtp = new Mtp(0x0e8d, 0x201d);
-
-  if (isBrowser) {
-    mtp.addEventListener('error', err => console.log('Error', err));
-
-    mtp.addEventListener('ready', async () => {
-      mtp.addEventListener('data', (event) => mtp.dataHandler(event.detail));
-      await mtp.openSession();
-    } );
-  } else {
-    mtp.on('error', err => console.log('Error', err));
-    mtp.on('ready', async () => {
-      mtp.on('data', (data) => mtp.dataHandler(data));
-      await mtp.openSession();
-    });
-  }
-};
-
-if (isBrowser) {
-  document.addEventListener('DOMContentLoaded', event => {
-    let button = document.getElementById('connect');
-
-    button.addEventListener('click', async() => {
-      initMTP();
-    });
-  });
-
-} else {
-  initMTP();
+if(!isBrowser) {
+  module.exports = Mtp;
 }
