@@ -14,7 +14,7 @@ if (!isBrowser) {
   EventTarget = require('events');
   fs = require('fs');
 } else {
-  usb = navigator.usb;
+  usb = navigator.usb; // Yay, we're using WebUSB!
 }
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -261,7 +261,7 @@ class Mtp extends EventTarget {
           const array = new Uint8Array(data.payload);
 
           if (isBrowser) {
-            var file = new Blob([array]);
+            const file = new Blob([array]);
             const a = document.createElement('a'),
                 url = URL.createObjectURL(file);
             a.href = url;
