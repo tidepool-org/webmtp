@@ -9,7 +9,7 @@ mtp.on('ready', async () => {
   const handles = await mtp.getObjectHandles();
   const objectHandle = Math.max(...handles);
   const fileName = await mtp.getFileName(objectHandle);
-  const array = await mtp.getFile(objectHandle, fileName);
+  const array = new Uint8Array(await mtp.getFile(objectHandle, fileName));
   fs.writeFileSync(fileName, array);
   await mtp.close();
 });
