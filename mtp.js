@@ -277,7 +277,7 @@ class Mtp extends EventTarget {
     await this.write(this.buildContainerPacket(getFile));
     const data = await this.readData();
 
-    return data.payload;
+    return new Uint8Array(data.payload);
   }
 }
 

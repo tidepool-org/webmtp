@@ -20,7 +20,7 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
       let button = document.getElementById('connect');
 
       button.addEventListener('click', async() => {
-        const mtp = new Mtp(0x0e8d, 0x201d);
+        const mtp = new Mtp(vendorId, productId);
 
         mtp.addEventListener('error', err => console.log('Error', err));
 
@@ -29,8 +29,20 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
           const handles = await mtp.getObjectHandles();
           const objectHandle = Math.max(...handles);
           const fileName = await mtp.getFileName(objectHandle);
-          await mtp.getFile(objectHandle, fileName);
+          const array = await mtp.getFile(objectHandle, fileName);
           await mtp.close();
+
+          const file = new Blob([array]);
+          const a = document.createElement('a'),
+              url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+          }, 0);
         });
       });
     });
@@ -53,7 +65,8 @@ mtp.on('ready', async () => {
   const handles = await mtp.getObjectHandles();
   const objectHandle = Math.max(...handles);
   const fileName = await mtp.getFileName(objectHandle);
-  await mtp.getFile(objectHandle, fileName);
+  const array = await mtp.getFile(objectHandle, fileName);
+  fs.writeFileSync(fileName, array);
   await mtp.close();
 });
 
