@@ -193,11 +193,11 @@ class Mtp extends EventTarget {
     return result;
   }
 
-  async writeAsync(buffer) {
+  async write(buffer) {
     return await this.device.transferOut(0x01, buffer);
   }
 
-  async closeAsync() {
+  async close() {
     try {
       console.log('Closing session..');
       const closeSession = {
@@ -205,7 +205,7 @@ class Mtp extends EventTarget {
         code: CODE.CLOSE_SESSION.value,
         payload: [1], // session ID
       };
-      await this.writeAsync(this.buildContainerPacket(closeSession));
+      await this.write(this.buildContainerPacket(closeSession));
 
       await this.device.releaseInterface(0);
       await this.device.close();
@@ -226,7 +226,7 @@ class Mtp extends EventTarget {
       payload: [1], // session ID
     };
     let data = this.buildContainerPacket(openSession);
-    let result = await this.writeAsync(data);
+    let result = await this.write(data);
     console.log('Result:', result);
     console.log(await this.read());
   }
@@ -238,7 +238,7 @@ class Mtp extends EventTarget {
       code: CODE.GET_OBJECT_HANDLES.value,
       payload: [0xFFFFFFFF, 0, 0xFFFFFFFF], // get all
     };
-    await this.writeAsync(this.buildContainerPacket(getObjectHandles, 4));
+    await this.write(this.buildContainerPacket(getObjectHandles, 4));
     const data = await this.readData();
 
     data.parameters.shift(); // Remove length element
@@ -257,7 +257,7 @@ class Mtp extends EventTarget {
       code: CODE.GET_OBJECT_PROP_VALUE.value,
       payload: [objectHandle, CODE.OBJECT_FILE_NAME.value], // objectHandle and objectPropCode
     };
-    await this.writeAsync(this.buildContainerPacket(getFilename));
+    await this.write(this.buildContainerPacket(getFilename));
     const data = await this.readData();
 
     const array = new Uint8Array(data.payload);
@@ -274,26 +274,10 @@ class Mtp extends EventTarget {
       code: CODE.GET_OBJECT.value,
       payload: [objectHandle],
     };
-    await this.writeAsync(this.buildContainerPacket(getFile));
+    await this.write(this.buildContainerPacket(getFile));
     const data = await this.readData();
 
-    const array = new Uint8Array(data.payload);
-
-    if (isBrowser) {
-      const file = new Blob([array]);
-      const a = document.createElement('a'),
-          url = URL.createObjectURL(file);
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function() {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-      }, 0);
-    } else {
-      fs.writeFileSync(filename, array);
-    }
+    return new Uint8Array(data.payload);
   }
 }
 

@@ -1,4 +1,5 @@
 const Mtp = require('./mtp.js');
+const fs = require('fs');
 
 const mtp = new Mtp(0x0e8d, 0x201d);
 
@@ -8,6 +9,7 @@ mtp.on('ready', async () => {
   const handles = await mtp.getObjectHandles();
   const objectHandle = Math.max(...handles);
   const fileName = await mtp.getFileName(objectHandle);
-  await mtp.getFile(objectHandle, fileName);
-  await mtp.closeAsync();
+  const array = await mtp.getFile(objectHandle, fileName);
+  fs.writeFileSync(fileName, array);
+  await mtp.close();
 });

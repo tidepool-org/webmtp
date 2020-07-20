@@ -30,7 +30,7 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
           const objectHandle = Math.max(...handles);
           const fileName = await mtp.getFileName(objectHandle);
           await mtp.getFile(objectHandle, fileName);
-          await mtp.closeAsync();
+          await mtp.close();
         });
       });
     });
@@ -54,7 +54,7 @@ mtp.on('ready', async () => {
   const objectHandle = Math.max(...handles);
   const fileName = await mtp.getFileName(objectHandle);
   await mtp.getFile(objectHandle, fileName);
-  await mtp.closeAsync();
+  await mtp.close();
 });
 
 TODO

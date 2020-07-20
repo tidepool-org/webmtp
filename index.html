@@ -17,8 +17,21 @@
           const handles = await mtp.getObjectHandles();
           const objectHandle = Math.max(...handles);
           const fileName = await mtp.getFileName(objectHandle);
-          await mtp.getFile(objectHandle, fileName);
-          await mtp.closeAsync();
+          const array = await mtp.getFile(objectHandle, fileName);
+          await mtp.close();
+
+          const file = new Blob([array]);
+          const a = document.createElement('a'),
+              url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+          }, 0);
+
         });
       });
     });
