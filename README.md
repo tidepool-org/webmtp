@@ -25,8 +25,12 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
         mtp.addEventListener('error', err => console.log('Error', err));
 
         mtp.addEventListener('ready', async () => {
-          mtp.addEventListener('data', (event) => mtp.dataHandler(event.detail));
           await mtp.openSession();
+          const handles = await mtp.getObjectHandles();
+          const objectHandle = Math.max(...handles);
+          const fileName = await mtp.getFileName(objectHandle);
+          await mtp.getFile(objectHandle, fileName);
+          await mtp.closeAsync();
         });
       });
     });
@@ -45,8 +49,12 @@ const mtp = new Mtp(vendorId, productId);
 
 mtp.on('error', err => console.log('Error', err));
 mtp.on('ready', async () => {
-  mtp.on('data', (data) => mtp.dataHandler(data));
   await mtp.openSession();
+  const handles = await mtp.getObjectHandles();
+  const objectHandle = Math.max(...handles);
+  const fileName = await mtp.getFileName(objectHandle);
+  await mtp.getFile(objectHandle, fileName);
+  await mtp.closeAsync();
 });
 
 TODO
