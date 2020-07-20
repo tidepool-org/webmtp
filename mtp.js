@@ -81,8 +81,6 @@ class Mtp extends EventTarget {
         }
         await self.device.claimInterface(0);
 
-        self.isClosing = false;
-        self.readLoop();
         if (isBrowser) {
           self.dispatchEvent(new Event('ready'));
         } else {
@@ -150,7 +148,7 @@ class Mtp extends EventTarget {
     return fields;
   }
 
-  async readLoop() {
+  async read() {
     let result;
 
     try {
@@ -159,7 +157,6 @@ class Mtp extends EventTarget {
     } catch (error) {
       if (error.message.indexOf('LIBUSB_TRANSFER_NO_DEVICE')) {
         console.log('Device disconnected');
-        this.isClosing = true;
       } else {
         console.log('Error reading data:', error);
       }
@@ -180,26 +177,28 @@ class Mtp extends EventTarget {
       // totalLength += incoming.data.byteLength;
       // console.log('Full buffer is now:', raw);
 
-      if (isBrowser) {
-        this.dispatchEvent(new CustomEvent('data', { detail: this.parseContainerPacket(bytes, length) }));
-      } else {
-        this.emit('data', this.parseContainerPacket(bytes, length));
-      }
+      return this.parseContainerPacket(bytes, length);
+    }
+  }
+
+  async readData() {
+    let type = null;
+    let result = null;
+
+    while (type !== 'Data Block') {
+      result = await this.read();
+      type = result.type;
     }
 
-    if (!this.isClosing && this.device.opened) {
-      this.readLoop();
-    }
-  };
+    return result;
+  }
 
   async writeAsync(buffer) {
     return await this.device.transferOut(0x01, buffer);
   }
 
   async closeAsync() {
-    this.isClosing = true;
     try {
-
       console.log('Closing session..');
       const closeSession = {
         type: 1, // command block
@@ -219,85 +218,6 @@ class Mtp extends EventTarget {
     }
   }
 
-  async dataHandler(data) {
-    switch (this.state) {
-      case 'open':
-        console.log('Getting object handles..');
-        const getObjectHandles = {
-          type: 1, // command block
-          code: CODE.GET_OBJECT_HANDLES.value,
-          payload: [0xFFFFFFFF, 0, 0xFFFFFFFF], // get all
-        };
-        await this.writeAsync(this.buildContainerPacket(getObjectHandles, 4));
-        this.state = 'handles';
-        break;
-      case 'handles':
-        if (data.type === 'Data Block') {
-
-          data.parameters.shift(); // Remove length element
-
-          data.parameters.forEach( element => {
-            console.log('Object handle', element);
-          });
-
-          this.objectHandle = Math.max(...data.parameters);
-
-          console.log('Getting file name..');
-          const getFilename = {
-            type: 1,
-            code: CODE.GET_OBJECT_PROP_VALUE.value,
-            payload: [this.objectHandle, CODE.OBJECT_FILE_NAME.value], // objectHandle and objectPropCode
-          };
-          await this.writeAsync(this.buildContainerPacket(getFilename));
-          this.state = 'filename';
-        }
-        break;
-      case 'filename':
-        if (data.type === 'Data Block') {
-          const array = new Uint8Array(data.payload);
-          const decoder = new TextDecoder('utf-16le');
-          this.filename = decoder.decode(array.subarray(1, array.byteLength - 2));
-          console.log('Filename:', this.filename);
-
-          console.log('Getting file..');
-          const getFile = {
-            type: 1,
-            code: CODE.GET_OBJECT.value,
-            payload: [this.objectHandle],
-          };
-          await this.writeAsync(this.buildContainerPacket(getFile));
-          this.state = 'file';
-        }
-        break;
-      case 'file':
-        if (data.type === 'Data Block') {
-          const array = new Uint8Array(data.payload);
-
-          if (isBrowser) {
-            const file = new Blob([array]);
-            const a = document.createElement('a'),
-                url = URL.createObjectURL(file);
-            a.href = url;
-            a.download = this.filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function() {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 0);
-          } else {
-            fs.writeFileSync(this.filename, array);
-          }
-
-          this.state = 'close';
-        }
-        break;
-      case 'close':
-        await this.closeAsync();
-        break;
-    }
-  }
-
   async openSession() {
     console.log('Opening session..');
     const openSession = {
@@ -308,8 +228,72 @@ class Mtp extends EventTarget {
     let data = this.buildContainerPacket(openSession);
     let result = await this.writeAsync(data);
     console.log('Result:', result);
+    console.log(await this.read());
+  }
 
-    await delay(2000); // wait for send/receive to complete
+  async getObjectHandles() {
+    console.log('Getting object handles..');
+    const getObjectHandles = {
+      type: 1, // command block
+      code: CODE.GET_OBJECT_HANDLES.value,
+      payload: [0xFFFFFFFF, 0, 0xFFFFFFFF], // get all
+    };
+    await this.writeAsync(this.buildContainerPacket(getObjectHandles, 4));
+    const data = await this.readData();
+
+    data.parameters.shift(); // Remove length element
+
+    data.parameters.forEach( element => {
+      console.log('Object handle', element);
+    });
+
+    return data.parameters;
+  }
+
+  async getFileName(objectHandle) {
+    console.log('Getting file name with object handle', objectHandle);
+    const getFilename = {
+      type: 1,
+      code: CODE.GET_OBJECT_PROP_VALUE.value,
+      payload: [objectHandle, CODE.OBJECT_FILE_NAME.value], // objectHandle and objectPropCode
+    };
+    await this.writeAsync(this.buildContainerPacket(getFilename));
+    const data = await this.readData();
+
+    const array = new Uint8Array(data.payload);
+    const decoder = new TextDecoder('utf-16le');
+    const filename = decoder.decode(array.subarray(1, array.byteLength - 2));
+    console.log('Filename:', filename);
+    return filename;
+  }
+
+  async getFile(objectHandle, filename) {
+    console.log(`Getting file with object handle ${objectHandle} as ${filename}`);
+    const getFile = {
+      type: 1,
+      code: CODE.GET_OBJECT.value,
+      payload: [objectHandle],
+    };
+    await this.writeAsync(this.buildContainerPacket(getFile));
+    const data = await this.readData();
+
+    const array = new Uint8Array(data.payload);
+
+    if (isBrowser) {
+      const file = new Blob([array]);
+      const a = document.createElement('a'),
+          url = URL.createObjectURL(file);
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+      }, 0);
+    } else {
+      fs.writeFileSync(filename, array);
+    }
   }
 }
 
