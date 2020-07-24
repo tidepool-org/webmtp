@@ -166,10 +166,8 @@ class Mtp extends EventTarget {
 
         console.log('Container Length:', containerLength);
         console.log('Length:', raw.byteLength);
-        console.log(result.data.buffer);
 
         while (raw.byteLength !== containerLength) {
-          console.log('Getting more data');
           result = await this.device.transferIn(0x01, this.packetSize);
           console.log(`Adding ${result.data.byteLength} bytes`);
 
