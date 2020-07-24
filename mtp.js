@@ -81,6 +81,13 @@ class Mtp extends EventTarget {
         }
         await self.device.claimInterface(0);
 
+        try {
+          self.packetSize = self.device.configuration.interfaces[0].alternate.endpoints[0].packetSize * 2;
+        } catch (err) {
+          console.log('No packet size found, setting to 1024 bytes');
+          self.packetSize = 1024;
+        }
+
         if (isBrowser) {
           self.dispatchEvent(new Event('ready'));
         } else {
@@ -149,36 +156,42 @@ class Mtp extends EventTarget {
   }
 
   async read() {
-    let result;
-
     try {
-      // TODO: read multiple times instead of one big buffer
-      result = await this.device.transferIn(0x01, 8000);
+      let result = await this.device.transferIn(0x01, this.packetSize);
+
+      if (result && result.data && result.data.byteLength && result.data.byteLength > 0) {
+        let raw = new Uint8Array(result.data.buffer);
+        const bytes = new DataView(result.data.buffer);
+        const containerLength = bytes.getUint32(0, true);
+
+        console.log('Container Length:', containerLength);
+        console.log('Length:', raw.byteLength);
+        console.log(result.data.buffer);
+
+        while (raw.byteLength !== containerLength) {
+          console.log('Getting more data');
+          result = await this.device.transferIn(0x01, this.packetSize);
+          console.log(`Adding ${result.data.byteLength} bytes`);
+
+          const uint8array = raw.slice();
+          raw = new Uint8Array(uint8array.byteLength + result.data.byteLength);
+          raw.set(uint8array);
+          raw.set(new Uint8Array(result.data.buffer), uint8array.byteLength);
+        }
+
+        return this.parseContainerPacket(new DataView(raw.buffer), containerLength);
+      }
+
+      return result;
+
     } catch (error) {
       if (error.message.indexOf('LIBUSB_TRANSFER_NO_DEVICE')) {
         console.log('Device disconnected');
       } else {
         console.log('Error reading data:', error);
+        throw error;
       }
     };
-
-    if (result && result.data && result.data.byteLength && result.data.byteLength > 0) {
-      const uint8buffer = new Uint8Array(result.data.buffer);
-      const bytes = new DataView(result.data.buffer);
-      const length = bytes.getUint32(0, true);
-      const totalLength = result.data.byteLength;
-
-      console.log('Length:', length);
-      console.log(result.data.buffer);
-
-      // raw = new ArrayBuffer(totalLength + incoming.data.byteLength);
-      // raw.set(buf);
-      // raw.set(incoming.data, totalLength);
-      // totalLength += incoming.data.byteLength;
-      // console.log('Full buffer is now:', raw);
-
-      return this.parseContainerPacket(bytes, length);
-    }
   }
 
   async readData() {
@@ -187,7 +200,15 @@ class Mtp extends EventTarget {
 
     while (type !== 'Data Block') {
       result = await this.read();
-      type = result.type;
+
+      if (result) {
+        if (result.status === 'babble') {
+          result = await this.read();
+        }
+        type = result.type;
+      } else {
+        throw new Error('No data returned');
+      }
     }
 
     return result;
