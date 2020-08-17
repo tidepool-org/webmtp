@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/tidepool-org/webmtp#readme",
   "dependencies": {
-    "webusb": "2.0.2"
+    "webusb": "2.1.0"
   }
 }
