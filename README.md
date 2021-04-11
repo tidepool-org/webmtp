@@ -46,6 +46,8 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
         });
       });
     });
+    </script>
+  </head>
   <body>
     <button id="connect">Connect</button>
   </body>
