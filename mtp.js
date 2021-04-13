@@ -79,14 +79,20 @@ class Mtp extends EventTarget {
           console.log('selectConfiguration');
           await self.device.selectConfiguration(1);
         }
-        await self.device.claimInterface(0);
 
-        try {
-          self.packetSize = self.device.configuration.interfaces[0].alternate.endpoints[0].packetSize * 2;
-        } catch (err) {
-          console.log('No packet size found, setting to 1024 bytes');
-          self.packetSize = 1024;
-        }
+        const iface = self.device.configuration.interfaces[0];
+        await self.device.claimInterface(iface.interfaceNumber);
+
+        const epOut = iface.alternate.endpoints.find((ep) => ep.direction === "out");
+        const epIn  = iface.alternate.endpoints.find((ep) => ep.direction === "in");
+
+        this.device.usbconfig = {
+          interface: iface,
+          outEPnum: epOut.endpointNumber,
+          inEPnum : epIn.endpointNumber,
+          outPacketSize: epOut.packetSize || 1024,
+          inPacketSize : epIn.packetSize || 1024
+        };
 
         if (isBrowser) {
           self.dispatchEvent(new Event('ready'));
@@ -157,7 +163,7 @@ class Mtp extends EventTarget {
 
   async read() {
     try {
-      let result = await this.device.transferIn(0x01, this.packetSize);
+      let result = await this.device.transferIn(this.device.usbconfig.inEPnum, this.device.usbconfig.inPacketSize);
 
       if (result && result.data && result.data.byteLength && result.data.byteLength > 0) {
         let raw = new Uint8Array(result.data.buffer);
@@ -168,7 +174,7 @@ class Mtp extends EventTarget {
         console.log('Length:', raw.byteLength);
 
         while (raw.byteLength !== containerLength) {
-          result = await this.device.transferIn(0x01, this.packetSize);
+          result = await this.device.transferIn(this.device.usbconfig.inEPnum, this.device.usbconfig.inPacketSize);
           console.log(`Adding ${result.data.byteLength} bytes`);
 
           const uint8array = raw.slice();
@@ -213,7 +219,7 @@ class Mtp extends EventTarget {
   }
 
   async write(buffer) {
-    return await this.device.transferOut(0x01, buffer);
+    return await this.device.transferOut(this.device.usbconfig.outEPnum, buffer);
   }
 
   async close() {
