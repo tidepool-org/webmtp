@@ -1,4 +1,4 @@
-let isBrowser, usb, fs = null;
+let isBrowser, usb = null;
 
 if (typeof navigator !== 'undefined') {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -12,7 +12,6 @@ if (!isBrowser) {
   // For Node.js and Electron
   usb = require('webusb').usb;
   EventTarget = require('events');
-  fs = require('fs');
 } else {
   usb = navigator.usb; // Yay, we're using WebUSB!
 }
@@ -306,6 +305,6 @@ class Mtp extends EventTarget {
   }
 }
 
-if(!isBrowser) {
+if (typeof module === 'object') {
   module.exports = Mtp;
 }
