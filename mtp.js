@@ -39,21 +39,23 @@ const CODE = {
 };
 
 class Mtp extends EventTarget {
-  constructor(vendorId, productId) {
+  constructor(vendorId, productId, device) {
     super();
     const self = this;
     self.state = 'open';
     self.transactionID = 0;
-    self.device = null;
+    self.device = device;
 
     (async () => {
 
-      let devices = await usb.getDevices();
-      for (const device of devices) {
-        if (device.productId === productId && device.vendorId === vendorId) {
-          self.device = device;
-        }
-      };
+      if (self.device == null) {
+        let devices = await usb.getDevices();
+        for (const device of devices) {
+          if (device.productId === productId && device.vendorId === vendorId) {
+            self.device = device;
+          }
+        };
+      }
 
       if (self.device === null) {
         self.device = await usb.requestDevice({
