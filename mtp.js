@@ -57,7 +57,7 @@ class Mtp extends EventTarget {
         };
       }
 
-      if (self.device === null) {
+      if (self.device == null) {
         self.device = await usb.requestDevice({
           filters: [
             {
