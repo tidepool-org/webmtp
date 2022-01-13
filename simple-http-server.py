@@ -1,10 +1,12 @@
 # to create the SSL cert and key:
 # openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout newkey.key -out newkey.crt
 
-import BaseHTTPServer, SimpleHTTPServer
+from http.server import HTTPServer,SimpleHTTPRequestHandler
 import ssl
 
-# 0.0.0.0 allows connections from anywhere
-httpd = BaseHTTPServer.HTTPServer(('0.0.0.0', 8080), SimpleHTTPServer.SimpleHTTPRequestHandler)
-httpd.socket = ssl.wrap_socket (httpd.socket, certfile='./newkey.crt', keyfile='./newkey.key', server_side=True)
+httpd = HTTPServer(('0.0.0.0', 8080), SimpleHTTPRequestHandler)
+sslctx = ssl.SSLContext()
+sslctx.check_hostname = False # If set to True, only the hostname that matches the certificate will be accepted
+sslctx.load_cert_chain(certfile='./newkey.crt', keyfile="./newkey.key")
+httpd.socket = sslctx.wrap_socket(httpd.socket, server_side=True)
 httpd.serve_forever()

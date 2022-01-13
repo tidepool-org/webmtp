@@ -14,38 +14,39 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
 <html>
   <head>
     <title>MTP over WebUSB</title>
-    <script src="https://cdn.jsdelivr.net/npm/webmtp/mtp.min.js"></script>
-    <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', event => {
-      let button = document.getElementById('connect');
+    <script type="module">
+      import Mtp from 'https://cdn.jsdelivr.net/npm/webmtp/mtp.min.js';
 
-      button.addEventListener('click', async() => {
-        const mtp = new Mtp(vendorId, productId);
+      document.addEventListener('DOMContentLoaded', event => {
+        let button = document.getElementById('connect');
 
-        mtp.addEventListener('error', err => console.log('Error', err));
+        button.addEventListener('click', async() => {
+          const mtp = new Mtp(vendorId, productId);
 
-        mtp.addEventListener('ready', async () => {
-          await mtp.openSession();
-          const handles = await mtp.getObjectHandles();
-          const objectHandle = Math.max(...handles);
-          const fileName = await mtp.getFileName(objectHandle);
-          const array = await mtp.getFile(objectHandle, fileName);
-          await mtp.close();
+          mtp.addEventListener('error', err => console.log('Error', err));
 
-          const file = new Blob([array]);
-          const a = document.createElement('a'),
-              url = URL.createObjectURL(file);
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(function() {
-              document.body.removeChild(a);
-              window.URL.revokeObjectURL(url);
-          }, 0);
+          mtp.addEventListener('ready', async () => {
+            await mtp.openSession();
+            const handles = await mtp.getObjectHandles();
+            const objectHandle = Math.max(...handles);
+            const fileName = await mtp.getFileName(objectHandle);
+            const array = await mtp.getFile(objectHandle, fileName);
+            await mtp.close();
+
+            const file = new Blob([array]);
+            const a = document.createElement('a'),
+                url = URL.createObjectURL(file);
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+          });
         });
       });
-    });
     </script>
   </head>
   <body>
@@ -57,12 +58,13 @@ On some operating systems (e.g. macOS) devices like modern Android phones do not
 ### Node.js / Electron
 
 ```
-const Mtp = require('webmtp');
+import Mtp from 'webmtp';
+import fs from 'fs';
 
 const mtp = new Mtp(vendorId, productId);
 
-mtp.on('error', err => console.log('Error', err));
-mtp.on('ready', async () => {
+mtp.addEventListener('error', err => console.log('Error', err));
+mtp.addEventListener('ready', async () => {
   await mtp.openSession();
   const handles = await mtp.getObjectHandles();
   const objectHandle = Math.max(...handles);
@@ -71,6 +73,4 @@ mtp.on('ready', async () => {
   fs.writeFileSync(fileName, array);
   await mtp.close();
 });
-
-TODO
 ```
