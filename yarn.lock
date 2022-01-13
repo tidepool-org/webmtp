@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.4.tgz#57e4181041dc1ad2bfad59b737caa7bddc7e1a27"
   integrity sha512-aaOB3EL5WCWBBOYX7W1MKuzspOM9ZJI9s3iziRVypr1N+QyvIgXzCM4lm1iiOQ1VFzZioUPX9bsa23myCbKK4A==
 
+core-js@2.6.11:
+  version "2.6.11"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.11.tgz#38831469f9922bded8ee21c9dc46985e0399308c"
+  integrity sha512-5wjnpaT/3dV+XB4borEsnAYQchn00XSgTAWKDkEqv+K8KevjbzmofK6hfJ9TZIlpj2N0xQpazy7PiRQiWHqzWg==
+
 node-addon-api@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-4.2.0.tgz#117cbb5a959dff0992e1c586ae0393573e4d2a87"

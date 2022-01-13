@@ -8,14 +8,6 @@ if (typeof navigator !== 'undefined') {
   isBrowser = false;
 }
 
-if (!isBrowser) {
-  // For Node.js and Electron
-  const { webusb } = await import('usb');
-  usb = webusb;
-} else {
-  usb = navigator.usb; // Yay, we're using WebUSB!
-}
-
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const TYPE = [
@@ -48,6 +40,13 @@ export default class Mtp extends EventTarget {
     self.device = device;
 
     (async () => {
+      if (!isBrowser) {
+        // For Node.js and Electron
+        const { webusb } = await import('usb');
+        usb = webusb;
+      } else {
+        usb = navigator.usb; // Yay, we're using WebUSB!
+      }
 
       if (self.device == null) {
         let devices = await usb.getDevices();
