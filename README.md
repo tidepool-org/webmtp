@@ -74,3 +74,5 @@ mtp.addEventListener('ready', async () => {
   await mtp.close();
 });
 ```
+
+Note: If you already have a `USBDevice` object returned from `navigator.usb.requestDevices()` or `navigator.usb.getDevices()`, you can pass that in as a third parameter to the constructor, e.g. `const mtp = new Mtp(vendorId, productId, usbDevice)` or even `const mtp = new Mtp(null, null, usbDevice)`. `webmtp` will use that `USBDevice` instead.

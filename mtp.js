@@ -1,5 +1,4 @@
-export let isBrowser = null;
-let usb = null;
+let isBrowser, usb = null;
 
 if (typeof navigator !== 'undefined') {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -40,23 +39,26 @@ const CODE = {
 };
 
 export default class Mtp extends EventTarget {
-  constructor(vendorId, productId) {
+  constructor(vendorId, productId, device) {
     super();
     const self = this;
     self.state = 'open';
     self.transactionID = 0;
     self.device = null;
+    self.device = device;
 
     (async () => {
 
-      let devices = await usb.getDevices();
-      for (const device of devices) {
-        if (device.productId === productId && device.vendorId === vendorId) {
-          self.device = device;
-        }
-      };
+      if (self.device == null) {
+        let devices = await usb.getDevices();
+        for (const device of devices) {
+          if (device.productId === productId && device.vendorId === vendorId) {
+            self.device = device;
+          }
+        };
+      }
 
-      if (self.device === null) {
+      if (self.device == null) {
         self.device = await usb.requestDevice({
           filters: [
             {
