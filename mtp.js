@@ -36,7 +36,6 @@ export default class Mtp extends EventTarget {
     const self = this;
     self.state = 'open';
     self.transactionID = 0;
-    self.device = null;
     self.device = device;
 
     (async () => {
