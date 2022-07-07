@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@types/w3c-web-usb@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.4.tgz#57e4181041dc1ad2bfad59b737caa7bddc7e1a27"
-  integrity sha512-aaOB3EL5WCWBBOYX7W1MKuzspOM9ZJI9s3iziRVypr1N+QyvIgXzCM4lm1iiOQ1VFzZioUPX9bsa23myCbKK4A==
+"@types/w3c-web-usb@1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.6.tgz#5d8560d0d9f585ffc80865bc773db7bc975b680c"
+  integrity sha512-cSjhgrr8g4KbPnnijAr/KJDNKa/bBa+ixYkywFRvrhvi9n1WEl7yYbtRyzE6jqNQiSxxJxoAW3STaOQwJHndaw==
 
 core-js@2.6.11:
   version "2.6.11"
@@ -22,11 +22,11 @@ node-gyp-build@^4.3.0:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.3.0.tgz#9f256b03e5826150be39c764bf51e993946d71a3"
   integrity sha512-iWjXZvmboq0ja1pUGULQBexmxq8CV4xBhX7VDOTbL7ZR4FOowwY/VOtRxBN/yKxmdGoIp4j5ysNT4u3S2pDQ3Q==
 
-usb@2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/usb/-/usb-2.0.3.tgz#c8a420f9a02bcdf644790eb4fa46506065c16a0d"
-  integrity sha512-UnUtZK5ebhDdNTjcO+cHFnpo25iifNm+E7F4f5g4pCUH+0M8b4SiVqILNzqz9iqQNK326PGawOYdkTJbplqsIg==
+usb@2.4.3:
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/usb/-/usb-2.4.3.tgz#fab8c1820276d0cb34f87a5ddba0152633d4a829"
+  integrity sha512-BmCjjxsriODcrb+TdXdzSDDys+MOUeRvo22ywmyIxYcuVW9YKrr2Wp2gQZUfHrQbvovKu87Po9mk5OPftJdDeQ==
   dependencies:
-    "@types/w3c-web-usb" "^1.0.4"
+    "@types/w3c-web-usb" "1.0.6"
     node-addon-api "^4.2.0"
     node-gyp-build "^4.3.0"
