@@ -2,38 +2,48 @@
   <head>
     <title>MTP over WebUSB</title>
     <!-- <script src="https://cdn.jsdelivr.net/npm/webmtp/mtp.min.js"></script> -->
-    <script src="./mtp.js"></script>
-    <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', event => {
-      let button = document.getElementById('connect');
+    <script type="module">
+      import Mtp from './mtp.js';
+      document.addEventListener('DOMContentLoaded', event => {
+        let button = document.getElementById('connect');
 
-      button.addEventListener('click', async() => {
-        const mtp = new Mtp(0x0e8d, 0x201d);
+        button.addEventListener('click', async() => {
+          const mtp = new Mtp(0x0e8d, 0x201d);
 
-        mtp.addEventListener('error', err => console.log('Error', err));
+          mtp.addEventListener('error', err => console.log('Error', err));
 
-        mtp.addEventListener('ready', async () => {
-          await mtp.openSession();
-          const handles = await mtp.getObjectHandles();
-          const objectHandle = Math.max(...handles);
-          const fileName = await mtp.getFileName(objectHandle);
-          const array = await mtp.getFile(objectHandle, fileName);
-          await mtp.close();
+          mtp.addEventListener('ready', async () => {
+            await mtp.openSession();
+            const handles = await mtp.getObjectHandles();
 
-          const file = new Blob([array]);
-          const a = document.createElement('a'),
-              url = URL.createObjectURL(file);
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(function() {
-              document.body.removeChild(a);
-              window.URL.revokeObjectURL(url);
-          }, 0);
+            handles.sort((a, b) => b - a);
+            console.log('Handles:', handles);
+
+            let fileName;
+            let objectHandle;
+            for (let i = 0; i < handles.length; i++) {
+              objectHandle = handles[i];
+              fileName = await mtp.getFileName(objectHandle);
+              if (fileName.endsWith('.ibf')) {
+                break;
+              }
+            }
+            const array = await mtp.getFile(objectHandle, fileName);
+
+            const file = new Blob([array]);
+            const a = document.createElement('a'),
+                url = URL.createObjectURL(file);
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+          });
         });
       });
-    });
     </script>
   </head>
   <body>

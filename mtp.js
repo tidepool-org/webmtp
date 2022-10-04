@@ -1,4 +1,4 @@
-let isBrowser, usb, fs = null;
+let isBrowser, usb = null;
 
 if (typeof navigator !== 'undefined') {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -6,15 +6,6 @@ if (typeof navigator !== 'undefined') {
 } else {
   // Node.js process
   isBrowser = false;
-}
-
-if (!isBrowser) {
-  // For Node.js and Electron
-  usb = require('webusb').usb;
-  EventTarget = require('events');
-  fs = require('fs');
-} else {
-  usb = navigator.usb; // Yay, we're using WebUSB!
 }
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -39,24 +30,33 @@ const CODE = {
   GET_OBJECT_PROP_VALUE: { value: 0x9803, name: 'GetObjectPropValue' },
 };
 
-class Mtp extends EventTarget {
-  constructor(vendorId, productId) {
+export default class Mtp extends EventTarget {
+  constructor(vendorId, productId, device) {
     super();
     const self = this;
     self.state = 'open';
     self.transactionID = 0;
-    self.device = null;
+    self.device = device;
 
     (async () => {
+      if (!isBrowser) {
+        // For Node.js and Electron
+        const { webusb } = await import('usb');
+        usb = webusb;
+      } else {
+        usb = navigator.usb; // Yay, we're using WebUSB!
+      }
 
-      let devices = await usb.getDevices();
-      for (const device of devices) {
-        if (device.productId === productId && device.vendorId === vendorId) {
-          self.device = device;
-        }
-      };
+      if (self.device == null) {
+        let devices = await usb.getDevices();
+        for (const device of devices) {
+          if (device.productId === productId && device.vendorId === vendorId) {
+            self.device = device;
+          }
+        };
+      }
 
-      if (self.device === null) {
+      if (self.device == null) {
         self.device = await usb.requestDevice({
           filters: [
             {
@@ -94,21 +94,13 @@ class Mtp extends EventTarget {
           inPacketSize : epIn.packetSize || 1024
         };
 
-        if (isBrowser) {
-          self.dispatchEvent(new Event('ready'));
-        } else {
-          self.emit('ready');
-        }
+        self.dispatchEvent(new Event('ready'));
       } else {
         throw new Error('No device available.');
       }
     })().catch((error) => {
       console.log('Error during MTP setup:', error);
-      if (isBrowser) {
-        self.dispatchEvent(new Event('error'));
-      } else {
-        self.emit('error', error);
-      }
+      self.dispatchEvent(new Event('error'));
     });
   }
 
@@ -234,9 +226,6 @@ class Mtp extends EventTarget {
 
       await this.device.releaseInterface(0);
       await this.device.close();
-      if (!isBrowser) {
-        this.removeAllListeners();
-      }
       console.log('Closed device');
     } catch(err) {
       console.log('Error:', err);
@@ -304,8 +293,4 @@ class Mtp extends EventTarget {
 
     return new Uint8Array(data.payload);
   }
-}
-
-if(!isBrowser) {
-  module.exports = Mtp;
 }
