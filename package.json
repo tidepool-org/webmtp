@@ -24,6 +24,6 @@
   "homepage": "https://github.com/tidepool-org/webmtp#readme",
   "dependencies": {
     "core-js": "2.6.11",
-    "usb": "2.4.3"
+    "usb": "2.5.2"
   }
 }
