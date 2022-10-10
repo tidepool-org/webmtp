@@ -77,10 +77,7 @@ export default class Mtp extends EventTarget {
 
         console.log(JSON.stringify(self.device.configuration, null, 4));
 
-        if (self.device.configuration === null) {
-          console.log('selectConfiguration');
-          await self.device.selectConfiguration(1);
-        }
+        await self.device.selectConfiguration(1);
 
         const iface = self.device.configuration.interfaces[0];
         await self.device.claimInterface(iface.interfaceNumber);
