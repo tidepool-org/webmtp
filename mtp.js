@@ -1,12 +1,11 @@
-let isBrowser, usb = null;
+let usb = null;
+import isElectron from 'is-electron';
 
-if (typeof navigator !== 'undefined') {
-  const userAgent = navigator.userAgent.toLowerCase();
-  isBrowser = userAgent.indexOf(' electron/') === -1 && typeof window !== 'undefined';
-} else {
-  // Node.js process
-  isBrowser = false;
-}
+const is_electron = isElectron();
+const is_node =
+  typeof process !== 'undefined' &&
+  process.versions != null &&
+  process.versions.node != null;
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -39,8 +38,8 @@ export default class Mtp extends EventTarget {
     self.device = device;
 
     (async () => {
-      if (!isBrowser) {
-        // For Node.js and Electron
+      if (is_node && !is_electron) {
+        // For Node.js
         const { webusb } = await import('usb');
         usb = webusb;
       } else {

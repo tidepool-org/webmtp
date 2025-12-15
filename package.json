@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/tidepool-org/webmtp#readme",
   "dependencies": {
+    "is-electron": "2.2.2",
     "usb": "2.16.0"
   }
 }
