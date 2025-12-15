@@ -2,10 +2,7 @@ let usb = null;
 import isElectron from 'is-electron';
 
 const is_electron = isElectron();
-const is_node =
-  typeof process !== 'undefined' &&
-  process.versions != null &&
-  process.versions.node != null;
+const is_node = globalThis.process?.versions?.node != null;
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
